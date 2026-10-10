@@ -6,7 +6,8 @@ from .views import (
     inventory_summary_report,
     customer_outstanding_report,
     supplier_outstanding_report,
-    profit_loss_report
+    profit_loss_report,
+    daily_saved_reports_view
 )
 
 urlpatterns = [
@@ -17,4 +18,5 @@ urlpatterns = [
     path('customer-outstanding/', customer_outstanding_report, name='report_customer_outstanding'),
     path('supplier-outstanding/', supplier_outstanding_report, name='report_supplier_outstanding'),
     path('profit-loss/', profit_loss_report, name='report_profit_loss'),
+    path('saved-daily/', daily_saved_reports_view, name='report_saved_daily'),
 ]

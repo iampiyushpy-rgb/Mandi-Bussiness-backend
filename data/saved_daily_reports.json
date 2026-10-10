@@ -1,0 +1,104 @@
+[
+  {
+    "id": "RPT-2026-10-07",
+    "date": "2026-10-07",
+    "savedAt": "2026-10-10T05:35:22.533Z",
+    "savedBy": "admin",
+    "isLocked": true,
+    "income": {
+      "collection": {
+        "total": 5200,
+        "cash": 0,
+        "upi": 5200,
+        "bank": 0,
+        "itemsCount": 1
+      },
+      "cashSell": 1500,
+      "bfAmount": 0,
+      "subtotal": 6700
+    },
+    "expenses": {
+      "total": 0,
+      "subtotal": 0,
+      "itemsCount": 0
+    },
+    "adjustment": {
+      "type": "add",
+      "amount": 0,
+      "effectiveAmount": 0
+    },
+    "finalTotal": 6700,
+    "collectionItems": [
+      {
+        "name": "Guru",
+        "party_name": "Guru",
+        "amount": 5200,
+        "mode": "UPI",
+        "less": 25
+      }
+    ],
+    "expenseItems": []
+  },
+  {
+    "id": "RPT-2026-10-06",
+    "date": "2026-10-06",
+    "savedAt": "2026-10-08T06:50:15.919Z",
+    "savedBy": "admin",
+    "isLocked": true,
+    "income": {
+      "collection": {
+        "total": 16000,
+        "cash": 5000,
+        "upi": 3000,
+        "bank": 8000,
+        "itemsCount": 3
+      },
+      "cashSell": 653676.04,
+      "bfAmount": 0,
+      "subtotal": 669676.04
+    },
+    "expenses": {
+      "total": 1000,
+      "subtotal": 1000,
+      "itemsCount": 1
+    },
+    "adjustment": {
+      "type": "add",
+      "amount": 0,
+      "effectiveAmount": 0
+    },
+    "finalTotal": 668676.04,
+    "collectionItems": [
+      {
+        "name": "maunta",
+        "party_name": "maunta",
+        "amount": 3000,
+        "mode": "UPI",
+        "less": 0
+      },
+      {
+        "name": "Sidhart",
+        "party_name": "Sidhart",
+        "amount": 8000,
+        "mode": "BANK",
+        "less": 0
+      },
+      {
+        "name": "Rana",
+        "party_name": "Rana",
+        "amount": 5000,
+        "mode": "CASH",
+        "less": 0
+      }
+    ],
+    "expenseItems": [
+      {
+        "name": "preet sir",
+        "supplier_name": "preet sir",
+        "amount": 1000,
+        "mode": "BANK",
+        "notes": "Expenses / Paisa Diya"
+      }
+    ]
+  }
+]

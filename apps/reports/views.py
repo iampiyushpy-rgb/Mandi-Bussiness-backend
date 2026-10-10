@@ -1,8 +1,12 @@
 import datetime
+import json
+import os
 from decimal import Decimal
+from django.conf import settings
 from django.db.models import Sum, Count, F, Q, ExpressionWrapper, DecimalField
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
+from rest_framework import status
 
 from apps.purchases.models import PurchaseOrder, PurchaseOrderItem, SupplierTruckPayment
 from apps.sales.models import SalesOrder, SalesOrderItem
@@ -288,3 +292,104 @@ def profit_loss_report(request):
         'wastage_loss': float(wastage_loss),
         'net_profit': float(net_profit),
     })
+
+
+REPORTS_FILE_PATH = os.path.join(settings.BASE_DIR, 'data', 'saved_daily_reports.json')
+
+def _load_saved_reports():
+    if not os.path.exists(REPORTS_FILE_PATH):
+        return []
+    try:
+        with open(REPORTS_FILE_PATH, 'r', encoding='utf-8') as f:
+            return json.load(f)
+    except Exception:
+        return []
+
+def _save_saved_reports(reports_list):
+    os.makedirs(os.path.dirname(REPORTS_FILE_PATH), exist_ok=True)
+    with open(REPORTS_FILE_PATH, 'w', encoding='utf-8') as f:
+        json.dump(reports_list, f, indent=2, ensure_ascii=False)
+
+
+@api_view(['GET', 'POST', 'DELETE'])
+@permission_classes([CanViewReports])
+def daily_saved_reports_view(request):
+    """
+    Endpoint to retrieve, save or delete daily closed financial reports with database persistence.
+    """
+    from .models import DailySavedReport
+
+    if request.method == 'GET':
+        db_records = DailySavedReport.objects.all().order_by('-report_date')
+        if db_records.exists():
+            return Response([r.report_data for r in db_records])
+
+        # Seamless migration: if file has reports but DB is empty, backfill into DB
+        file_reports = _load_saved_reports()
+        for r in file_reports:
+            r_date_str = str(r.get('date', '')).split('T')[0]
+            if r_date_str:
+                try:
+                    d_parsed = datetime.datetime.strptime(r_date_str, '%Y-%m-%d').date()
+                    DailySavedReport.objects.update_or_create(
+                        report_date=d_parsed,
+                        defaults={
+                            'report_id': r.get('id') or f"RPT-{r_date_str}",
+                            'saved_by': r.get('savedBy') or 'admin',
+                            'is_locked': bool(r.get('isLocked', True)),
+                            'report_data': r
+                        }
+                    )
+                except Exception:
+                    pass
+
+        db_records_after = DailySavedReport.objects.all().order_by('-report_date')
+        if db_records_after.exists():
+            return Response([r.report_data for r in db_records_after])
+        return Response(file_reports)
+
+    elif request.method == 'POST':
+        data = request.data
+        if not data or not data.get('date'):
+            return Response({'error': 'Report must include a date'}, status=status.HTTP_400_BAD_REQUEST)
+
+        req_date_str = str(data.get('date')).split('T')[0]
+        try:
+            d_parsed = datetime.datetime.strptime(req_date_str, '%Y-%m-%d').date()
+        except ValueError:
+            return Response({'error': 'Invalid date format (must be YYYY-MM-DD)'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Database persistence
+        report_obj, _ = DailySavedReport.objects.update_or_create(
+            report_date=d_parsed,
+            defaults={
+                'report_id': data.get('id') or f"RPT-{req_date_str}",
+                'saved_by': data.get('savedBy') or (request.user.username if request.user.is_authenticated else 'admin'),
+                'is_locked': bool(data.get('isLocked', True)),
+                'report_data': data
+            }
+        )
+
+        # File backup sync
+        reports = _load_saved_reports()
+        updated = [data] + [r for r in reports if str(r.get('date')).split('T')[0] != req_date_str]
+        _save_saved_reports(updated)
+
+        return Response({'status': 'saved', 'report': report_obj.report_data}, status=status.HTTP_201_CREATED)
+
+    elif request.method == 'DELETE':
+        target = request.GET.get('id') or request.GET.get('date')
+        if not target:
+            return Response({'error': 'Specify id or date to delete'}, status=status.HTTP_400_BAD_REQUEST)
+
+        target_str = str(target).split('T')[0]
+        DailySavedReport.objects.filter(Q(report_id=target) | Q(report_date=target_str)).delete()
+
+        # File backup sync
+        reports = _load_saved_reports()
+        updated = [r for r in reports if r.get('id') != target and str(r.get('date')).split('T')[0] != target_str]
+        _save_saved_reports(updated)
+
+        return Response({'status': 'deleted'})
+
+

@@ -83,6 +83,10 @@ class ProductVarietyViewSet(viewsets.ModelViewSet):
                 prod = Product.objects.create(category=cat, name='General Fruit', product_code='PROD-GEN-01')
             data['product'] = prod.id
 
+        existing = ProductVariety.objects.filter(product_id=data['product'], variety_name__iexact=data.get('variety_name', '')).first()
+        if existing:
+            return Response(ProductVarietySerializer(existing).data, status=status.HTTP_200_OK)
+
         serializer = self.get_serializer(data=data)
         serializer.is_valid(raise_exception=True)
         self.perform_create(serializer)

@@ -12,11 +12,13 @@ from apps.customers.models import Customer
 from apps.purchases.models import PurchaseOrder, PurchaseOrderItem, SupplierTruckPayment
 from apps.sales.models import SalesOrder, SalesOrderItem
 from apps.inventory.models import InventoryLot, InventoryTransaction
-from apps.payments.models import CustomerLedger, SupplierLedger
+from apps.payments.models import CustomerLedger, SupplierLedger, Payment
 
 print("=== CLEANING BUSINESS DATA ===")
 
 # Delete transactional and operational data
+Payment.objects.all().delete()
+print("Cleared Payments")
 SupplierTruckPayment.objects.all().delete()
 print("Cleared SupplierTruckPayment")
 
@@ -46,14 +48,18 @@ print("Cleared Customers")
 Supplier.objects.all().delete()
 print("Cleared Suppliers")
 
+from apps.core.models import AuditLog
+AuditLog.objects.all().delete()
+print("Cleared Audit Logs")
+
 print("\n=== SETTING UP CLEAN MASTER ESSENTIALS ===")
 # Ensure master categories & units exist so new entries have valid foreign keys
-cat1, _ = Category.objects.get_or_create(id=1, defaults={'name': 'Fresh Fruits'})
-cat2, _ = Category.objects.get_or_create(id=2, defaults={'name': 'Dry Fruits & Nuts'})
+cat1, _ = Category.objects.get_or_create(name='Fresh Fruits')
+cat2, _ = Category.objects.get_or_create(name='Dry Fruits & Nuts')
 print(f"Categories ready: {cat1.name}, {cat2.name}")
 
-u1, _ = Unit.objects.get_or_create(id=1, defaults={'unit_name': 'Kilogram', 'symbol': 'KG'})
-u2, _ = Unit.objects.get_or_create(id=2, defaults={'unit_name': 'Box', 'symbol': 'BX'})
+u1, _ = Unit.objects.get_or_create(unit_name='Kilogram', defaults={'symbol': 'KG'})
+u2, _ = Unit.objects.get_or_create(unit_name='Box', defaults={'symbol': 'BX'})
 print(f"Units ready: {u1.unit_name}, {u2.unit_name}")
 
 # Ensure admin user is active
